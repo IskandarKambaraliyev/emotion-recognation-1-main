@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <style>
+        #imagePreview {
+            max-width: 300px;
+            max-height: 300px;
+            margin-top: 20px;
+        }
+
+        #loading {
+            display: none;
+            font-weight: bold;
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <h2>Upload Image for Prediction</h2>
+
+    <!-- File input to select image -->
+    <input type="file" id="imageInput" accept=".jpg,.png" />
+    <button onclick="uploadImage()">Upload</button>
+
+    <!-- Display the selected image -->
+    <div id="imagePreviewContainer" style="display: none;">
+        <h4>Selected Image:</h4>
+        <img id="imagePreview" src="" alt="Selected Image Preview" />
+    </div>
+
+    <!-- Loading text -->
+    <p id="loading">Uploading...</p>
+
+    <!-- Display the result -->
+    <h3>Prediction Result:</h3>
+    <p id="result">No result yet</p>
+
+    <script>
+        // Function to display selected image
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Function to handle the image upload
+        function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const formData = new FormData();
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a file.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert("Please select a valid image file.");
+                return;
+            }
+
+            formData.append("file", file);
+
+            // Show the loading text and hide result
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').textContent = 'No result yet';
+
+            // Send the image to the backend using fetch
+            fetch("/predict/", {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading and display the prediction result
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').textContent = `Prediction: ${data.prediction}`;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                document.getElementById('loading').style.display = 'none';
+                alert("Error during upload.");
+            });
+        }
+    </script>
+</body>
+</html>
